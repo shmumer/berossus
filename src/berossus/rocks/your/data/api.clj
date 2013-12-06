@@ -26,9 +26,12 @@
         db-uri  (dburi-from-request request)
         db-conn (conn db-uri)
         results (d/q (read-string query) (d/db db-conn))
+        limit (or limit 10)
+        offset (or offset 0)
+        paginated (take limit (drop offset results))
         num-results (count results)]
     {:data
-     {:result results :count num-results}
+     {:result paginated :count num-results}
      :template "templates/dump.html"}))
 
 (defn api-routes []
