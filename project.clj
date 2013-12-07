@@ -7,7 +7,7 @@
   :main berossus.rocks.your.data.server
   :dependencies [[org.clojure/clojure "1.5.1"]
                  ;; exclude and use your own as necessary
-                 [com.datomic/datomic-pro "0.8.4254"]
+                 [com.datomic/datomic-pro "0.8.4270"]
                  [http-kit "2.1.13"]
                  [compojure "1.1.5"]
                  [ring/ring-devel "1.1.0"]

@@ -27,6 +27,9 @@
                                    :db/id (d/tempid :db.part/user)
                                    :message/timestamp #inst "2005-01-01"}])}))
 
+(defn paginate-request [limit offset]
+  (update-in query-request [:params] merge {:limit limit :offset offset}))
+
 (defn msg-schema []
   (mapv (partial apply gen-schema)
         [[:message/uuid :db.type/uuid :db.cardinality/one :db/unique :db.unique/identity]
@@ -50,9 +53,15 @@
 (deftest berossus-query-api-test
   (testing "Can query via the API"
     (init-test-db!)
-    (is (= (count (:result (:data (app query-request)))) 51))))
+    (is (= (count (:result (:data (app query-request)))) 10))))
 
 (deftest berossus-transact-api-test
   (testing "Can transact via the API"
     (init-test-db!)
     (is (map? (app transact-request)))))
+
+(deftest berossus-pagination-api-test
+  (testing "Can paginate via the API"
+    (init-test-db!)
+    (is (= (count (:result (:data (app (paginate-request 27 0))))) 27))
+    (is (= (count (:result (:data (app (paginate-request 51 5))))) 46))))
