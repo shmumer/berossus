@@ -1,4 +1,13 @@
-<pre>
-  {{results}}
-  {{dump}}
-</pre>
+<!DOCTYPE html>
+<html>
+  <head></head>
+  <body>
+    <pre>
+      <ul>
+        {% for row in result %}
+        <li>{{row}}</li>
+        {% endfor %}
+      </ul>
+    </pre>
+  </body>
+</html>

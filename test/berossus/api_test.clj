@@ -12,7 +12,7 @@
     (ensure-db dburi)
     (d/connect dburi)))
 
-(defn id-accept [r] (assoc-in r [:headers "Accept"] "application/identity"))
+(defn id-accept [r] (assoc-in r [:headers "accept"] "application/identity"))
 
 (def base-query (id-accept (request :get "/api/v1/default/")))
 (def base-transact (id-accept (request :post "/api/v1/default/")))

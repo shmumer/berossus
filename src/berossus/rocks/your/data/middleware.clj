@@ -2,6 +2,7 @@
   (:require [taoensso.timbre :as t]
             [clojure.stacktrace :as st]
             [berossus.rocks.your.data.config :refer [get-config]]
+            [ring.util.response :refer [response]]
             [selmer.parser :refer [render-file]]))
 
 (defn wrap-exception [f]
@@ -22,15 +23,17 @@
 (defn template-renderer [context]
   (let [template (:template context)
         data     (:data context)]
-    (render-file template data)))
+    (response (render-file template data))))
 
 (def export-funcs
   {"application/identity" identity
    "text/edn"             pr-str
    "text/html"            template-renderer})
 
+(require '[clojure.pprint :refer [pprint]])
+
 (defn exporter [request]
-  (let [accept (get-in request [:headers "Accept"])
+  (let [accept (get-in request [:headers "accept"])
         format (some #(re-find (re-pattern %)
                                accept) (keys export-funcs))]
     (export-funcs format)))
