@@ -10,8 +10,10 @@
 (defn get-config
   ([]
      {:dev (dev?)
-      :services (parse-services (env :services
-                                     (pr-str {:default "datomic:mem://dev"})))})
+      :services (merge (parse-services
+                        ;; {:my-database "fuckyeahdatabase_URL"}
+                        (env :berossus-services "{}"))
+                       {:default "datomic:mem://dev"})})
   ([key]
      (get-config key nil))
   ([key fallback]

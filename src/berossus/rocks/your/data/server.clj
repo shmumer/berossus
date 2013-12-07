@@ -1,13 +1,13 @@
 (ns berossus.rocks.your.data.server
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
-            [liberator.dev :refer [wrap-trace]]
             [berossus.rocks.your.data.api :refer [api-routes]]
             [berossus.rocks.your.data.config :refer [get-config]]
             [berossus.rocks.your.data.middleware :refer [wrap-exception wrap-export wrap-service]]
             [org.httpkit.server :refer [run-server]]
             [clojure.tools.nrepl.server :refer [start-server stop-server]]
             [taoensso.timbre :as t]
+            [selmer.parser]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.reload :as reload]))
@@ -21,7 +21,6 @@
 (def app (-> (apply routes (all-routes))
              (wrap-export)
              (wrap-exception)
-             (wrap-trace :header :ui)
              (wrap-keyword-params)
              (wrap-params)))
 
@@ -36,7 +35,8 @@
   (t/warn "Stopped nrepl"))
 
 (defn start-web []
-    (let [handler (if (get-config :dev)
+  (selmer.parser/cache-off!)
+  (let [handler (if (get-config :dev)
                   (do
                     (t/info "In dev mode, wrapping reload")
                     (reload/wrap-reload #'app))

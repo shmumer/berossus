@@ -1,6 +1,7 @@
 (ns berossus.rocks.your.data.api
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
+            [berossus.rocks.your.data.config :refer [get-config]]
             [berossus.rocks.your.data.db :refer [ensure-db]]
             [berossus.rocks.your.data.middleware :refer [wrap-service]]
             [clojure.pprint :refer [pprint]]
@@ -34,7 +35,13 @@
      {:result paginated :count num-results}
      :template "templates/dump.html"}))
 
+(defn list-services [request]
+  (let [services (get-config :services)]
+    {:data {:result services}
+     :template "templates/dump.html"}))
+
 (defn api-routes []
   (routes
+   (GET  "/api/v1/services/" {params :params} list-services)
    (GET  "/api/v1/:service/" {params :params} (wrap-service query))
    (POST "/api/v1/:service/" {params :params} (wrap-service transactor))))

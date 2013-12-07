@@ -28,15 +28,15 @@
 (def export-funcs
   {"application/identity" identity
    "text/edn"             pr-str
+   "\\*/\\*"              template-renderer
    "text/html"            template-renderer})
 
 (require '[clojure.pprint :refer [pprint]])
 
 (defn exporter [request]
   (let [accept (get-in request [:headers "accept"])
-        format (some #(re-find (re-pattern %)
-                               accept) (keys export-funcs))]
-    (export-funcs format)))
+        [[_ format-fn]] (filter #(re-find (re-pattern (first %)) "*/*") export-funcs)]
+    format-fn))
 
 (defn wrap-export [f]
   (fn [request]
