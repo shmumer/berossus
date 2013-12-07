@@ -30,7 +30,9 @@
    "text/html"            template-renderer})
 
 (defn exporter [request]
-  (let [format (get-in request [:headers "Accept"])]
+  (let [accept (get-in request [:headers "Accept"])
+        format (some #(re-find (re-pattern %)
+                               accept) (keys export-funcs))]
     (export-funcs format)))
 
 (defn wrap-export [f]
