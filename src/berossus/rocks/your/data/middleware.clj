@@ -25,9 +25,12 @@
         data     (:data context)]
     (response (render-file template data))))
 
+(defn edn-renderer [context]
+  (response (:data context)))
+
 (def export-funcs
   {"application/identity" identity
-   "text/edn"             pr-str
+   "text/edn"             edn-renderer
    "*/*"                  template-renderer
    "text/html"            template-renderer})
 

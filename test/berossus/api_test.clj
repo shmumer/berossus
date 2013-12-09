@@ -35,6 +35,9 @@
 (defn browser-request [request]
   (assoc-in request accept-k "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"))
 
+(defn edn-request [request]
+  (assoc-in request accept-k "text/edn"))
+
 (defn msg-schema []
   (mapv (partial apply gen-schema)
         [[:message/uuid :db.type/uuid :db.cardinality/one :db/unique :db.unique/identity]
@@ -71,7 +74,10 @@
     (is (= (count (:result (:data (app (paginate-request 27 0))))) 27))
     (is (= (count (:result (:data (app (paginate-request 51 5))))) 46))))
 
-(deftest berossus-browser-test
+(deftest berossus-content-neg-test
   (testing "Can access the API from a browser"
     (init-test-db!)
-    (is (= (.contains (:body (app (browser-request query-request))) "<!DOCTYPE html>")))))
+    (is (= (.contains (:body (app (browser-request query-request))) "<!DOCTYPE html>"))))
+  (testing "Can get edn back from the API"
+    (init-test-db!)
+    (is (= (:body (app (edn-request query-request))) {:result '([37] [38] [39] [40] [35] [36] [45] [46] [47] [48]), :count 51}))))
