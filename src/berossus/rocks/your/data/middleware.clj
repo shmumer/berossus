@@ -2,6 +2,7 @@
   (:require [taoensso.timbre :as t]
             [clojure.stacktrace :as st]
             [berossus.rocks.your.data.config :refer [get-config]]
+            [berossus.rocks.your.data.services :refer [registered]]
             [ring.util.response :refer [response]]
             [selmer.parser :refer [render-file]]))
 
@@ -26,7 +27,7 @@
     (response (render-file template data))))
 
 (defn edn-renderer [context]
-  (response (:data context)))
+  (response (pr-str (:data context))))
 
 (def export-funcs
   {"application/identity" identity
@@ -46,9 +47,10 @@
       (export-fn (f request)))))
 
 (defn wrap-service [f]
-  (let [services (get-config :services)]
     (fn [request]
-      (let [{:keys [service]} (:params request)]
+      (let [{:keys [service]} (:params request)
+            services          @registered]
         (if-not (contains? services (keyword service))
-          {:status 404 :body "Service not found, did you start the API server with a service alias by that name?"}
-          (f (assoc request :services services)))))))
+          {:status 404
+           :body "Service not found, did you start the API server with a service alias by that name?"}
+          (f (assoc request :services services))))))

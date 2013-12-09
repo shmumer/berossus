@@ -77,7 +77,10 @@
 (deftest berossus-content-neg-test
   (testing "Can access the API from a browser"
     (init-test-db!)
-    (is (= (.contains (:body (app (browser-request query-request))) "<!DOCTYPE html>"))))
+    (is (= (.contains (:body (app (browser-request query-request)))
+                      "<!DOCTYPE html>"))))
+
   (testing "Can get edn back from the API"
     (init-test-db!)
-    (is (= (:body (app (edn-request query-request))) {:result '([37] [38] [39] [40] [35] [36] [45] [46] [47] [48]), :count 51}))))
+    (is (= (:body (app (edn-request query-request)))
+           "{:result ([37] [38] [39] [40] [35] [36] [45] [46] [47] [48]), :count 51}"))))
