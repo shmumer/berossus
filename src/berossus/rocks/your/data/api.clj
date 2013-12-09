@@ -1,6 +1,7 @@
 (ns berossus.rocks.your.data.api
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
+            [berossus.rocks.your.data.config :refer [get-config]]
             [berossus.rocks.your.data.db :refer [ensure-db]]
             [berossus.rocks.your.data.middleware :refer [wrap-service]]
             [berossus.rocks.your.data.services :refer [registered]]
