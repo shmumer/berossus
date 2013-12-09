@@ -9,7 +9,7 @@
 
 (defn get-config
   ([]
-     {:dev (dev?)
+     {:dev      (dev?)
       :services (merge (parse-services
                         ;; {:my-database "fuckyeahdatabase_URL"}
                         (env :berossus-services "{}"))

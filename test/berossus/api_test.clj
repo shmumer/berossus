@@ -12,7 +12,9 @@
     (ensure-db dburi)
     (d/connect dburi)))
 
-(defn id-accept [r] (assoc-in r [:headers "accept"] "application/identity"))
+(def accept-k [:headers "accept"])
+
+(defn id-accept [r] (assoc-in r accept-k "application/identity"))
 
 (def base-query (id-accept (request :get "/api/v1/default/")))
 (def base-transact (id-accept (request :post "/api/v1/default/")))
@@ -29,6 +31,9 @@
 
 (defn paginate-request [limit offset]
   (update-in query-request [:params] merge {:limit limit :offset offset}))
+
+(defn browser-request [request]
+  (assoc-in request accept-k "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"))
 
 (defn msg-schema []
   (mapv (partial apply gen-schema)
@@ -65,3 +70,8 @@
     (init-test-db!)
     (is (= (count (:result (:data (app (paginate-request 27 0))))) 27))
     (is (= (count (:result (:data (app (paginate-request 51 5))))) 46))))
+
+(deftest berossus-browser-test
+  (testing "Can access the API from a browser"
+    (init-test-db!)
+    (is (= (.contains (:body (app (browser-request query-request))) "<!DOCTYPE html>")))))
