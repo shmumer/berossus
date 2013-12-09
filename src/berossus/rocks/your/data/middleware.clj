@@ -43,14 +43,25 @@
 
 (defn wrap-export [f]
   (fn [request]
-    (let [export-fn (exporter request)]
-      (export-fn (f request)))))
+    (let [export-fn (exporter request)
+          response (f request)
+          status (and (map? response) (:status response))]
+      (if (and status (not= 200 status))
+        response
+        (export-fn response)))))
+
+(defn inject-services [f]
+  (fn [request]
+    (f (assoc request :services @registered))))
+
+(defn validate-service [f]
+  (fn [request]
+    (let [{:keys [service]} (:params request)
+          services          (:services request)]
+      (if-not (contains? services (keyword service))
+        {:status 404
+         :body "Service not found, did you start the API server with a service alias by that name?"}
+        (f request)))))
 
 (defn wrap-service [f]
-    (fn [request]
-      (let [{:keys [service]} (:params request)
-            services          @registered]
-        (if-not (contains? services (keyword service))
-          {:status 404
-           :body "Service not found, did you start the API server with a service alias by that name?"}
-          (f (assoc request :services services))))))
+  (-> f validate-service inject-services))

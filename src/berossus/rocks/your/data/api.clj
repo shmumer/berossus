@@ -3,7 +3,7 @@
             [compojure.route :as route]
             [berossus.rocks.your.data.config :refer [get-config]]
             [berossus.rocks.your.data.db :refer [ensure-db]]
-            [berossus.rocks.your.data.middleware :refer [wrap-service]]
+            [berossus.rocks.your.data.middleware :refer [inject-services wrap-service]]
             [berossus.rocks.your.data.services :refer [registered]]
             [clojure.pprint :refer [pprint]]
             [datomic.api :as d]))
@@ -72,7 +72,7 @@
 
 (defn api-routes []
   (routes
-   (GET     "/api/v1/services/" {params :params} (wrap-service list-services))
+   (GET     "/api/v1/services/" {params :params} (inject-services list-services))
    (GET     "/api/v1/services/:service/" {params :params} (wrap-service query-services))
    (POST    "/api/v1/services/:service/" {params :params} create-service)
    (DELETE  "/api/v1/services/:service/" {params :params} (wrap-service delete-service))
