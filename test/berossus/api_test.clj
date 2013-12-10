@@ -84,7 +84,9 @@
   (testing "Can paginate via the API"
     (init-test-db!)
     (is (= (count (:result (:data (app (paginate-request 27 0))))) 27))
-    (is (= (count (:result (:data (app (paginate-request 51 5))))) 46))))
+    (is (= (count (:result (:data (app (paginate-request 51 5))))) 46))
+    (is (= (count (:result (:data (app (paginate-request "27" "0"))))) 27))
+    (is (= (count (:result (:data (app (paginate-request "51" "5"))))) 46))))
 
 (deftest berossus-content-neg-test
   (testing "Can access the API from a browser"
