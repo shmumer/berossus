@@ -50,29 +50,29 @@
   "Creates a service with an alias key for
   a dburi value. Ensures the database exists."
   [request]
-  (let [{:keys [service dburi]} (:params request)
+  (let [{:keys  [service dburi]} (:params request)
         ensured (ensure-db dburi)
         kw      (keyword service)
-        new-reg (swap! registered :assoc kw dburi)]
-    {:data {:result new-reg}
+        new-reg (swap! registered assoc kw dburi)]
+    {:data     {:result new-reg}
      :template "templates/dump.html"}))
 
 (defn delete-service
   "Deletes database in non-production,
   merely unregisters service in production"
   [request]
-  (let [service (:service request)
+  (let [{:keys [service]} (:params request)
         dburi   ((keyword service) @registered)
         dev?    (get-config :dev)
         new-reg (swap! registered dissoc (keyword service))]
     (when dev?
       (d/delete-database dburi))
-    {:data {:result new-reg}
+    {:data     {:result new-reg}
      :template "templates/dump.html"}))
 
 (defn api-routes []
   (routes
-   (GET     "/api/v1/services/" {params :params} (inject-services list-services))
+   (GET     "/api/v1/services/"          {params :params} (inject-services list-services))
    (GET     "/api/v1/services/:service/" {params :params} (wrap-service query-services))
    (POST    "/api/v1/services/:service/" {params :params} create-service)
    (DELETE  "/api/v1/services/:service/" {params :params} (wrap-service delete-service))

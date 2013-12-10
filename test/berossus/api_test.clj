@@ -5,6 +5,7 @@
               [berossus.rocks.your.data.api :refer :all]
               [berossus.rocks.your.data.db :refer [ensure-db gen-schema]]
               [berossus.rocks.your.data.server :refer [app]]
+              [berossus.rocks.your.data.services :refer [registered reset-services]]
               [berossus.rocks.your.data.config :refer [get-config]]))
 
 (defn test-conn []
@@ -37,6 +38,14 @@
 
 (defn edn-request [request]
   (assoc-in request accept-k "text/edn"))
+
+(defn create-request [service-name]
+  (-> (id-accept (request :post (str "/api/v1/services/" service-name "/")))
+      (assoc-in [:params :dburi] "datomic:mem://testdb")
+      (assoc-in [:params :service] service-name)))
+
+(defn delete-request [service-name]
+  (id-accept (request :delete (str "/api/v1/services/" service-name "/"))))
 
 (defn msg-schema []
   (mapv (partial apply gen-schema)
@@ -84,3 +93,20 @@
     (init-test-db!)
     (is (= (:body (app (edn-request query-request)))
            "{:result ([37] [38] [39] [40] [35] [36] [45] [46] [47] [48]), :count 51}"))))
+
+(deftest berossus-service-management
+  (testing "Can create services at runtime"
+    (reset-services)
+    (let [resp (app (create-request "test-service"))
+          services @registered]
+      (is (= services
+             (:result (:data resp))
+             {:default "datomic:mem://dev"
+              :test-service "datomic:mem://testdb"}))))
+
+  (testing "Can delete services at runtime"
+    (reset-services)
+    (let [_ (app (create-request "test-service"))
+          resp (app (delete-request "test-service"))
+          services @registered]
+      (is (= services (:result (:data resp)) {:default "datomic:mem://dev"})))))
