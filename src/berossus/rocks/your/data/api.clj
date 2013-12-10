@@ -51,11 +51,15 @@
   a dburi value. Ensures the database exists."
   [request]
   (let [{:keys  [service dburi]} (:params request)
-        ensured (ensure-db dburi)
         kw      (keyword service)
-        new-reg (swap! registered assoc kw dburi)]
-    {:data     {:result new-reg}
-     :template "templates/dump.html"}))
+        extant  (kw @registered)
+        ensured (and (not extant) (ensure-db dburi))
+        new-reg (and (not extant) (swap! registered assoc kw dburi))]
+    (if-not extant
+      {:data     {:result new-reg}
+       :template "templates/dump.html"}
+      {:status 409
+       :body   "409 Conflict: Service by that name/alias already exists, cannot create another by the same name."})))
 
 (defn delete-service
   "Deletes database in non-production,

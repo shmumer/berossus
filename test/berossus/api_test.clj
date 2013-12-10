@@ -107,6 +107,15 @@
              {:default "datomic:mem://dev"
               :test-service "datomic:mem://testdb"}))))
 
+  (testing "Creating a duplicate service returns HTTP 409"
+    (reset-services)
+    (let [resp (app (create-request "test-service"))
+          duplicate (app (create-request "test-service"))]
+      (is (= (:result (:data resp))
+             {:default "datomic:mem://dev"
+              :test-service "datomic:mem://testdb"}))
+      (is (= (:status duplicate) 409))))
+
   (testing "Can delete services at runtime"
     (reset-services)
     (let [_ (app (create-request "test-service"))
