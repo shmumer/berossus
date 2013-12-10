@@ -109,7 +109,7 @@
 
   (testing "Creating a duplicate service returns HTTP 409"
     (reset-services)
-    (let [resp (app (create-request "test-service"))
+    (let [resp      (app (create-request "test-service"))
           duplicate (app (create-request "test-service"))]
       (is (= (:result (:data resp))
              {:default "datomic:mem://dev"

@@ -23,13 +23,18 @@
         db-conn (conn db-uri)]
     {:data {:result @(d/transact db-conn (read-string transactee))}}))
 
+(defn string->number [s]
+  (if (string? s)
+    (and (seq s) (Integer. s))
+    s))
+
 (defn query [request]
   (let [{:keys [query limit offset args]} (:params request)
         db-uri  (dburi-from-request request)
         db-conn (conn db-uri)
         results (d/q (read-string query) (d/db db-conn))
-        limit (or limit 10)
-        offset (or offset 0)
+        limit  (or (string->number limit)  10)
+        offset (or (string->number offset) 0)
         paginated (take limit (drop offset results))
         num-results (count results)]
     {:data
