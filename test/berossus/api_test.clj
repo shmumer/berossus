@@ -52,18 +52,21 @@
         [[:message/uuid :db.type/uuid :db.cardinality/one :db/unique :db.unique/identity]
          [:message/timestamp :db.type/instant]]))
 
-(def test-msgs [{:message/uuid #uuid "fdd71557-77c2-43ce-8833-3240f7e03407"
-                 :message/timestamp #inst "2001"}
-                {:message/uuid #uuid "fdd71557-77c2-43ce-8833-3240f7e03408"
-                 :message/timestamp #inst "2002-02-02"}])
+(defn test-msgs []
+  (mapv #(assoc % :db/id (d/tempid :db.part/user))
+        [{:message/uuid #uuid "fdd71557-77c2-43ce-8833-3240f7e03407"
+          :message/timestamp #inst "2001"}
+         {:message/uuid #uuid "fdd71557-77c2-43ce-8833-3240f7e03408"
+          :message/timestamp #inst "2002-02-02"}]))
 
 (defn transact-test-schema! []
   (d/transact (test-conn) (msg-schema)))
 
 (defn transact-test-msgs! []
-  (d/transact (test-conn) test-msgs))
+  (d/transact (test-conn) (test-msgs)))
 
 (defn init-test-db! []
+  (d/delete-database (:default (get-config :services)))
   (transact-test-schema!)
   (transact-test-msgs!))
 
@@ -110,3 +113,16 @@
           resp (app (delete-request "test-service"))
           services @registered]
       (is (= services (:result (:data resp)) {:default "datomic:mem://dev"})))))
+
+
+;; Example of touching inside a query:
+
+;; (defn get-touched []
+;;   (d/q '[:find ?touched :in $ %
+;;          :where
+;;          [?e :db/doc ?doc]
+;;          (touch ?e ?touched)]
+;;        (d/db (test-conn))
+;;        '[[(touch ?eid ?touched)
+;;          [(datomic.api/entity $ ?eid) ?ent]
+;;          [(datomic.api/touch ?ent) ?touched]]]))
