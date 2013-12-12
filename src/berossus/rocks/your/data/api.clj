@@ -8,9 +8,17 @@
             [clojure.pprint :refer [pprint]]
             [datomic.api :as d]))
 
+;move conn and get-db to db.clj
 (defn conn [dburi]
   (let [_ (ensure-db dburi)]
     (d/connect dburi)))
+
+(defn get-db
+  "Gets a database value, defaulting db-uri, and ensures database exists"
+  ([]
+     (d/db (conn)))
+  ([db-uri]
+     (d/db (conn db-uri))))
 
 (defn dburi-from-request [request]
   (let [service (:service (:params request))
@@ -31,13 +39,16 @@
 (defn query [request]
   (let [{:keys [query limit offset args]} (:params request)
         db-uri  (dburi-from-request request)
-        db-conn (conn db-uri)
-        results (d/q (read-string query) (d/db db-conn))
+        db (get-db db-uri)
+        query-with-args (or (and args
+                              (concat [query db] (clojure.edn/read-string args)))
+                              [query db])
+        results (apply d/q query-with-args)
         limit  (or (string->number limit)  10)
         offset (or (string->number offset) 0)
         paginated (take limit (drop offset results))
         num-results (count results)]
-    {:data
+   {:data
      {:result paginated :count num-results}
      :template "templates/dump.html"}))
 

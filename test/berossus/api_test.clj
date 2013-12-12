@@ -125,6 +125,27 @@
           services @registered]
       (is (= services (:result (:data resp)) {:default "datomic:mem://dev"})))))
 
+(def touch-query-rules
+  '[[[(touch ?eid ?touched)
+    [(datomic.api/entity $ ?eid) ?ent]
+    [(datomic.api/touch ?ent) ?touched]]]])
+(def touch-query '[:find ?touched :in $ % :where [?e :db/doc ?doc]
+                  (touch ?e ?touched)])
+
+(def param-query
+  (update-in base-query [:params] assoc :query (str touch-query) :args (str touch-query-rules)))
+
+(def unique-keys (comp distinct (partial mapcat keys)))
+
+(deftest berossus-query-params-test
+  (testing "Can add params to database query"
+    (init-test-db!)
+    (let [resp (app param-query)
+          result (:result (:data resp))]
+      (is (= (count result) 10))
+      (is (= (unique-keys (mapcat concat result))
+             '(:db/doc :db/ident :db/cardinality :db/valueType :db.install/function
+               :db.install/attribute :db.install/valueType :db.install/partition :fressian/tag))))))
 
 ;; Example of touching inside a query:
 
