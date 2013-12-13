@@ -8,6 +8,12 @@ REST API wrapper for Datomic so that non-JVM applications can utilize Datomic. W
 lein run
 ```
 
+## Development
+
+```bash
+lein repl
+```
+
 ## License
 
 Copyright © 2013 Chris Allen
