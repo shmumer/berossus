@@ -47,6 +47,8 @@
 (defn delete-request [service-name]
   (id-accept (request :delete (str "/api/v1/services/" service-name "/"))))
 
+(def junk-query (assoc base-query :params {:query "blahblahblah"}))
+
 (defn msg-schema []
   (mapv (partial apply gen-schema)
         [[:message/uuid :db.type/uuid :db.cardinality/one :db/unique :db.unique/identity]
@@ -146,6 +148,13 @@
       (is (= (unique-keys (mapcat concat result))
              '(:db/doc :db/ident :db/cardinality :db/valueType :db.install/function
                :db.install/attribute :db.install/valueType :db.install/partition :fressian/tag))))))
+
+(deftest berossus-api-bad-inputs
+  (testing "Bad query returns a proper error"
+    (init-test-db!)
+    (let [resp (app junk-query)]
+      (is (= (:status resp) 500))
+      (is (= (.contains (:body resp) "query must be a readable edn string"))))))
 
 ;; Example of touching inside a query:
 

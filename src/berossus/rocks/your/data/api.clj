@@ -8,15 +8,13 @@
             [clojure.pprint :refer [pprint]]
             [datomic.api :as d]))
 
-;move conn and get-db to db.clj
+;; Move conn and get-db to db.clj
 (defn conn [dburi]
   (let [_ (ensure-db dburi)]
     (d/connect dburi)))
 
 (defn get-db
   "Gets a database value, defaulting db-uri, and ensures database exists"
-  ([]
-     (d/db (conn)))
   ([db-uri]
      (d/db (conn db-uri))))
 
