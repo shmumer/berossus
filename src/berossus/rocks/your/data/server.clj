@@ -10,7 +10,8 @@
             [selmer.parser]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
-            [ring.middleware.reload :as reload]))
+            [ring.middleware.reload :as reload])
+  (:gen-class))
 
 (defonce http-server (atom nil))
 (defonce nrepl-server (atom nil))
