@@ -3,7 +3,8 @@
             [compojure.route :as route]
             [berossus.rocks.your.data.config :refer [get-config]]
             [berossus.rocks.your.data.db :refer [ensure-db]]
-            [berossus.rocks.your.data.middleware :refer [inject-services wrap-service]]
+            [berossus.rocks.your.data.middleware :refer [inject-req inject-services
+                                                         wrap-service]]
             [berossus.rocks.your.data.services :refer [registered]]
             [clojure.pprint :refer [pprint]]
             [datomic.api :as d]))
@@ -14,9 +15,14 @@
     (d/connect dburi)))
 
 (defn get-db
-  "Gets a database value, defaulting db-uri, and ensures database exists"
+  "Gets a database value and ensures database exists"
   ([db-uri]
      (d/db (conn db-uri))))
+
+(defn get-log
+  "Gets a transaction log from the dburi and ensures database exists"
+  ([db-uri]
+     (d/log (conn db-uri))))
 
 (defn dburi-from-request [request]
   (let [service (:service (:params request))
@@ -36,11 +42,13 @@
 
 (defn query [request]
   (let [{:keys [query limit offset args]} (:params request)
-        db-uri  (dburi-from-request request)
-        db (get-db db-uri)
+        db-uri (dburi-from-request request)
+        handle-fn (or (:handle-fn request)
+                   get-db)
+        handle    (handle-fn db-uri)
         query-with-args (or (and args
-                              (concat [query db] (clojure.edn/read-string args)))
-                              [query db])
+                              (concat [query handle] (clojure.edn/read-string args)))
+                              [query handle])
         results (apply d/q query-with-args)
         limit  (or (string->number limit)  10)
         offset (or (string->number offset) 0)
@@ -95,5 +103,8 @@
    (POST    "/api/v1/services/:service/" {params :params} create-service)
    (DELETE  "/api/v1/services/:service/" {params :params} (wrap-service delete-service))
 
-   (GET  "/api/v1/:service/" {params :params} (wrap-service query))
-   (POST "/api/v1/:service/" {params :params} (wrap-service transactor))))
+   (GET  "/api/v1/:service/"     {params :params} (wrap-service query))
+   (GET  "/api/v1/:service/log/" {params :params} (wrap-service
+                                                   (inject-req :handle-fn get-log
+                                                               query)))
+   (POST "/api/v1/:service/"     {params :params} (wrap-service transactor))))

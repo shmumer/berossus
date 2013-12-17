@@ -149,10 +149,15 @@
              '(:db/doc :db/ident :db/cardinality :db/valueType :db.install/function
                :db.install/attribute :db.install/valueType :db.install/partition :fressian/tag))))))
 
+(defn hush-now [fn & args]
+  (with-redefs [*out* (new java.io.StringWriter)
+                *err* (new java.io.StringWriter)]
+    (apply fn args)))
+
 (deftest berossus-api-bad-inputs
   (testing "Bad query returns a proper error"
     (init-test-db!)
-    (let [resp (app junk-query)]
+    (let [resp (hush-now app junk-query)]
       (is (= (:status resp) 500))
       (is (= (.contains (:body resp) "query must be a readable edn string"))))))
 

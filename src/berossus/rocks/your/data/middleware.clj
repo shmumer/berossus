@@ -65,3 +65,8 @@
 
 (defn wrap-service [f]
   (-> f validate-service inject-services))
+
+(defn inject-req [key value f]
+  (fn [request]
+    (let [injected (assoc request key value)]
+      (f injected))))
