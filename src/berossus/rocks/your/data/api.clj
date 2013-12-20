@@ -42,6 +42,7 @@
 
 (defn query [request]
   (let [{:keys [query limit offset args]} (:params request)
+        query (clojure.edn/read-string query)
         db-uri (dburi-from-request request)
         handle-fn (or (:handle-fn request)
                    get-db)
