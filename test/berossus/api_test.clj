@@ -3,7 +3,7 @@
               [ring.mock.request :refer [request]]
               [datomic.api :as d]
               [berossus.rocks.your.data.api :refer :all]
-              [berossus.rocks.your.data.db :refer [ensure-db gen-schema]]
+              [berossus.rocks.your.data.db :refer [ensure-db gen-schema tx->tempids]]
               [berossus.rocks.your.data.server :refer [app]]
               [berossus.rocks.your.data.services :refer [registered reset-services]]
               [berossus.rocks.your.data.config :refer [get-config]]))
@@ -80,7 +80,14 @@
 (deftest berossus-transact-api-test
   (testing "Can transact via the API"
     (init-test-db!)
-    (is (map? (app transact-request)))))
+    (is (map? (app transact-request))))
+  (testing "Can get original tempid -> new id mapping"
+    (init-test-db!)
+    (let [tempify  (assoc-in transact-request [:params :tempify] true)
+          gathered (tx->tempids (read-string (get-in tempify [:params :transactee])))
+          result   (app tempify)
+          tempids  (set (keys (get-in result [:data :result :tempids] result)))]
+      (is (every? (partial contains? tempids) gathered)))))
 
 (deftest berossus-pagination-api-test
   (testing "Can paginate via the API"

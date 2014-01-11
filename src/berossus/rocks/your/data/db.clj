@@ -24,3 +24,19 @@
                :db/cardinality cardinality
                :db.install/_attribute :db.part/db}
               mapped))))
+
+(defn tempid? [t]
+  (= (class t) datomic.db.DbId))
+
+(defn tx-item->tempid [item]
+  (cond
+    (map? item)    (:db/id item)
+    (vector? item) (nth item 1)
+    :else (throw (Exception. "item wasn't vector or map, are you passing tx-items?"))))
+
+(defn tx->tempids [tx]
+  (reduce (fn [tempids tx-item]
+            (let [maybe-tempid (tx-item->tempid tx-item)]
+              (if (tempid? maybe-tempid)
+                (conj tempids maybe-tempid)
+                tempids))) [] tx))

@@ -2,9 +2,11 @@
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [berossus.rocks.your.data.config :refer [get-config]]
-            [berossus.rocks.your.data.db :refer [ensure-db]]
-            [berossus.rocks.your.data.middleware :refer [inject-req inject-services
-                                                         wrap-service]]
+            [berossus.rocks.your.data.db :refer [ensure-db tx->tempids]]
+            [berossus.rocks.your.data.dump :as dump]
+            [berossus.rocks.your.data.middleware
+              :refer [inject-req inject-services
+                      wrap-export wrap-service]]
             [berossus.rocks.your.data.services :refer [registered]]
             [clojure.pprint :refer [pprint]]
             [datomic.api :as d]))
@@ -30,10 +32,23 @@
     dburi))
 
 (defn transactor [request]
-  (let [{:keys [transactee]} (:params request)
-        db-uri  (dburi-from-request request)
-        db-conn (conn db-uri)]
-    {:data {:result @(d/transact db-conn (read-string transactee))}}))
+  (let [{:keys [transactee tempify]} (:params request)
+        db-uri     (dburi-from-request request)
+        db-conn    (conn db-uri)
+        read-txee  (read-string transactee)
+        result     @(d/transact db-conn read-txee)
+        tempids    (when tempify (tx->tempids read-txee))
+        tx-tempids (when tempify (:tempids result))
+        resolved   (when tempify
+                     (into {}
+                           (map (juxt identity
+                                #(d/resolve-tempid
+                                  (d/db db-conn) tx-tempids %))
+                          tempids)))
+        result     (or (and tempify
+                            (update-in result [:tempids] merge resolved))
+                       result)]
+    {:data {:result result}}))
 
 (defn string->number [s]
   (if (string? s)
@@ -48,7 +63,8 @@
                    get-db)
         handle    (handle-fn db-uri)
         query-with-args (or (and args
-                              (concat [query handle] (clojure.edn/read-string args)))
+                              (concat [query handle]
+                                      (clojure.edn/read-string args)))
                               [query handle])
         results (apply d/q query-with-args)
         limit  (or (string->number limit)  10)
@@ -97,8 +113,13 @@
     {:data     {:result new-reg}
      :template "templates/dump.html"}))
 
+(defn dumper [request]
+  {:data     {:result dump/data2}
+   :template "templates/dump.html"})
+
 (defn api-routes []
   (routes
+   (GET     "/api/dump/"                 {params :params} dumper)
    (GET     "/api/v1/services/"          {params :params} (inject-services list-services))
    (GET     "/api/v1/services/:service/" {params :params} (wrap-service query-services))
    (POST    "/api/v1/services/:service/" {params :params} create-service)
