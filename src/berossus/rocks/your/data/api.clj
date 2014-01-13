@@ -3,7 +3,6 @@
             [compojure.route :as route]
             [berossus.rocks.your.data.config :refer [get-config]]
             [berossus.rocks.your.data.db :refer [ensure-db tx->tempids]]
-            [berossus.rocks.your.data.dump :as dump]
             [berossus.rocks.your.data.middleware
               :refer [inject-req inject-services
                       wrap-export wrap-service]]
@@ -113,13 +112,8 @@
     {:data     {:result new-reg}
      :template "templates/dump.html"}))
 
-(defn dumper [request]
-  {:data     {:result dump/data2}
-   :template "templates/dump.html"})
-
 (defn api-routes []
   (routes
-   (GET     "/api/dump/"                 {params :params} dumper)
    (GET     "/api/v1/services/"          {params :params} (inject-services list-services))
    (GET     "/api/v1/services/:service/" {params :params} (wrap-service query-services))
    (POST    "/api/v1/services/:service/" {params :params} create-service)
