@@ -2,7 +2,8 @@
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [berossus.rocks.your.data.config :refer [get-config]]
-            [berossus.rocks.your.data.db :refer [ensure-db tx->tempids]]
+            [berossus.rocks.your.data.db :refer [datum->map ensure-db
+                                                 id->ident tx->tempids]]
             [berossus.rocks.your.data.middleware
               :refer [inject-req inject-services
                       wrap-export wrap-service]]
@@ -30,8 +31,16 @@
         dburi   (get-in request [:services (keyword service)])]
     dburi))
 
+(defn tx-attr-id->ident [tx-data db-conn]
+  (let [db (d/db db-conn)]
+    (mapv (fn [datum]
+           (let [mappy (datum->map datum)]
+             (update-in mappy [:a]
+                        (partial id->ident db))))
+           tx-data)))
+
 (defn transactor [request]
-  (let [{:keys [transactee tempify]} (:params request)
+  (let [{:keys [transactee tempify attr-ident]} (:params request)
         db-uri     (dburi-from-request request)
         db-conn    (conn db-uri)
         read-txee  (read-string transactee)
@@ -46,6 +55,9 @@
                           tempids)))
         result     (or (and tempify
                             (update-in result [:tempids] merge resolved))
+                       result)
+        result     (or (and attr-ident
+                            (update-in result [:tx-data] tx-attr-id->ident db-conn))
                        result)]
     {:data {:result result}}))
 
@@ -71,17 +83,18 @@
         paginated (take limit (drop offset results))
         num-results (count results)]
    {:data
-     {:result paginated :count num-results}
+     {:result  paginated
+      :count   num-results}
      :template "templates/dump.html"}))
 
 (defn list-services [request]
   (let [services (:services request)]
-    {:data {:result services}
+    {:data     {:result services}
      :template "templates/dump.html"}))
 
 (defn query-services [request]
   (let [service (:service request)]
-    {:data {:result service}
+    {:data     {:result service}
      :template "templates/dump.html"}))
 
 (defn create-service

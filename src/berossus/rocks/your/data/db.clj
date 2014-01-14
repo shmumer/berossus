@@ -40,3 +40,13 @@
               (if (tempid? maybe-tempid)
                 (conj tempids maybe-tempid)
                 tempids))) [] tx))
+
+(defn id->ident [db id]
+  (ffirst
+   (d/q '[:find ?i
+          :in $ ?id
+          :where [?id :db/ident ?i]]
+        db id)))
+
+(defn datum->map [dat]
+  (let [{:keys [e a v tx]} dat] (into {} [[:e e] [:a a] [:v v] [:tx tx]])))

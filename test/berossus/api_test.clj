@@ -87,7 +87,18 @@
           gathered (tx->tempids (read-string (get-in tempify [:params :transactee])))
           result   (app tempify)
           tempids  (set (keys (get-in result [:data :result :tempids] result)))]
-      (is (every? (partial contains? tempids) gathered)))))
+      (is (every? (partial contains? tempids) gathered))))
+  (testing "Can get attribute ident instead of id #"
+    (init-test-db!)
+    (let [attr-ident (assoc-in transact-request [:params :attr-ident] true)
+          result     (app attr-ident)
+          tx-data    (:tx-data (:result (:data result)))]
+      (is (every? #(contains? % :a) tx-data))
+      (is (every? #(not (integer? (:a %))) tx-data))
+      (is (= (vec (sort (mapv :a tx-data))) [:db/txInstant
+                                             :message/timestamp
+                                             :message/uuid])))))
+
 
 (deftest berossus-pagination-api-test
   (testing "Can paginate via the API"
