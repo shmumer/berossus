@@ -23,7 +23,7 @@
 (def simple-query '[:find ?e :where [?e :db/ident]])
 
 (def query-request (assoc base-query :params {:query (str simple-query)}))
-(def sorted-query-request (assoc-in query-request [:params :post-fn] "reverse"))
+(def reversed-query-request (assoc-in query-request [:params :post-fn] "reverse"))
 
 (def transact-request (assoc base-transact
                         :params
@@ -80,7 +80,7 @@
     (is (= (count (:result (:data (app query-request)))) 10)))
   (testing "Can get sorted results back from the API"
     (init-test-db!)
-    (is (= '([25] [26] [27] [21] [22] [23] [24] [17] [18] [20]) (:result (:data (app sorted-query-request)))))))
+    (is (= '([25] [26] [27] [21] [22] [23] [24] [17] [18] [20]) (:result (:data (app reversed-query-request)))))))
 
 (deftest berossus-transact-api-test
   (testing "Can transact via the API"
