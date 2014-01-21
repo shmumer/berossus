@@ -67,7 +67,7 @@
     s))
 
 (defn query [request]
-  (let [{:keys [query limit offset args]} (:params request)
+  (let [{:keys [query limit offset args post-fn]} (:params request)
         query (clojure.edn/read-string query)
         db-uri (dburi-from-request request)
         handle-fn (or (:handle-fn request)
@@ -78,9 +78,12 @@
                                       (clojure.edn/read-string args)))
                               [query handle])
         results (apply d/q query-with-args)
+        ;; sigh.
+        post-processed (or (and post-fn ((eval (read-string post-fn)) results))
+                           results)
         limit  (or (string->number limit)  10)
         offset (or (string->number offset) 0)
-        paginated (take limit (drop offset results))
+        paginated (take limit (drop offset post-processed))
         num-results (count results)]
    {:data
      {:result  paginated
