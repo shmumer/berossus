@@ -79,7 +79,7 @@
                               [query handle])
         results (apply d/q query-with-args)
         ;; sigh.
-        post-processed (or (and post-fn ((eval (read-string post-fn)) results))
+        post-processed (or (and post-fn ((eval (read-string post-fn)) results handle))
                            results)
         limit  (or (string->number limit)  10)
         offset (or (string->number offset) 0)

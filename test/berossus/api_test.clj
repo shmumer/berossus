@@ -23,7 +23,7 @@
 (def simple-query '[:find ?e :where [?e :db/ident]])
 
 (def query-request (assoc base-query :params {:query (str simple-query)}))
-(def reversed-query-request (assoc-in query-request [:params :post-fn] "reverse"))
+(def reversed-query-request (assoc-in query-request [:params :post-fn] "(fn [result db] (assert db) (reverse result))"))
 
 (def transact-request (assoc base-transact
                         :params
