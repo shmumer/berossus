@@ -82,4 +82,4 @@
       (if kosher?
         (f request)
         {:status 401
-         :body "Authenticated failed for client id and token."}))))
+         :body "Authentication failed for client id and token."}))))
