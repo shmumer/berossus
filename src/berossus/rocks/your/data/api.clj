@@ -6,6 +6,7 @@
                                                  id->ident tx->tempids]]
             [berossus.rocks.your.data.middleware
               :refer [inject-req inject-services
+                      validate-client
                       wrap-export wrap-service]]
             [berossus.rocks.your.data.services :refer [registered]]
             [clojure.pprint :refer [pprint]]
@@ -130,13 +131,27 @@
 
 (defn api-routes []
   (routes
-   (GET     "/api/v1/services/"          {params :params} (inject-services list-services))
-   (GET     "/api/v1/services/:service/" {params :params} (wrap-service query-services))
-   (POST    "/api/v1/services/:service/" {params :params} create-service)
-   (DELETE  "/api/v1/services/:service/" {params :params} (wrap-service delete-service))
+   (GET     "/api/v1/services/"
+            {params :params}
+            (validate-client (inject-services list-services)))
+   (GET     "/api/v1/services/:service/"
+            {params :params}
+            (validate-client (wrap-service query-services)))
+   (POST    "/api/v1/services/:service/"
+            {params :params}
+            (validate-client create-service))
+   (DELETE  "/api/v1/services/:service/"
+            {params :params}
+            (validate-client (wrap-service delete-service)))
 
-   (GET  "/api/v1/:service/"     {params :params} (wrap-service query))
-   (GET  "/api/v1/:service/log/" {params :params} (wrap-service
-                                                   (inject-req :handle-fn get-log
-                                                               query)))
-   (POST "/api/v1/:service/"     {params :params} (wrap-service transactor))))
+   (GET  "/api/v1/:service/"
+         {params :params}
+         (validate-client (wrap-service query)))
+   (GET  "/api/v1/:service/log/"
+         {params :params}
+         (validate-client (wrap-service
+                           (inject-req :handle-fn get-log
+                                       query))))
+   (POST "/api/v1/:service/"
+         {params :params}
+         (validate-client (wrap-service transactor)))))

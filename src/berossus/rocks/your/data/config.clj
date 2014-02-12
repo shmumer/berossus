@@ -4,16 +4,21 @@
 (defn dev? []
   (not (env :production nil)))
 
-(defn parse-services [services]
+(defn read-services [services]
   (read-string services))
+
+(defn read-clients [clients]
+  (read-string clients))
 
 (defn get-config
   ([]
      {:dev      (dev?)
-      :services (merge (parse-services
+      :clients  (merge {"admin" "booya"}
+                       (read-clients (env :berossus-clients "{}")))
+      :services (merge {:default "datomic:mem://dev"}
+                       (read-services
                         ;; {:my-database "fuckyeahdatabase_URL"}
-                        (env :berossus-services "{}"))
-                       {:default "datomic:mem://dev"})})
+                        (env :berossus-services "{}")))})
   ([key]
      (get-config key nil))
   ([key fallback]

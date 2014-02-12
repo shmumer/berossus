@@ -14,11 +14,18 @@
     (d/connect dburi)))
 
 (def accept-k [:headers "accept"])
+(def client-k [:headers "client-id"])
+(def token-k  [:headers "token"])
 
 (defn id-accept [r] (assoc-in r accept-k "application/identity"))
+(defn authed-request [r]
+  (let [with-client-id (assoc-in r client-k "admin")]
+    (assoc-in with-client-id token-k "booya")))
 
-(def base-query (id-accept (request :get "/api/v1/default/")))
-(def base-transact (id-accept (request :post "/api/v1/default/")))
+(defn prep-req [r] (authed-request (id-accept r)))
+
+(def base-query (prep-req    (request :get "/api/v1/default/")))
+(def base-transact (prep-req (request :post "/api/v1/default/")))
 
 (def simple-query '[:find ?e :where [?e :db/ident]])
 
@@ -42,12 +49,12 @@
   (assoc-in request accept-k "text/edn"))
 
 (defn create-request [service-name]
-  (-> (id-accept (request :post (str "/api/v1/services/" service-name "/")))
+  (-> (prep-req (request :post (str "/api/v1/services/" service-name "/")))
       (assoc-in [:params :dburi] "datomic:mem://testdb")
       (assoc-in [:params :service] service-name)))
 
 (defn delete-request [service-name]
-  (id-accept (request :delete (str "/api/v1/services/" service-name "/"))))
+  (prep-req (request :delete (str "/api/v1/services/" service-name "/"))))
 
 (def junk-query (assoc base-query :params {:query "blahblahblah"}))
 

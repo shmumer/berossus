@@ -70,3 +70,16 @@
   (fn [request]
     (let [injected (assoc request key value)]
       (f injected))))
+
+(defn validate-client [f]
+  (fn [request]
+    (let [headers (:headers request)
+          client-id (get headers "client-id")
+          token     (get headers "token")
+          clients (get-config :clients)
+          maybe-token (get clients client-id)
+          kosher? (and (= token maybe-token) (contains? clients client-id))]
+      (if kosher?
+        (f request)
+        {:status 401
+         :body "Authenticated failed for client id and token."}))))
