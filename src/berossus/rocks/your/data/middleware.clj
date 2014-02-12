@@ -4,7 +4,8 @@
             [berossus.rocks.your.data.config :refer [get-config]]
             [berossus.rocks.your.data.services :refer [registered]]
             [ring.util.response :refer [response]]
-            [selmer.parser :refer [render-file]]))
+            [selmer.parser :refer [render-file]]
+            [cheshire.core :refer [generate-string]]))
 
 (defn wrap-exception [f]
   (fn [request]
@@ -29,11 +30,15 @@
 (defn edn-renderer [context]
   (response (pr-str (:data context))))
 
+(defn json-renderer [context]
+  (response (generate-string (:data context))))
+
 (def export-funcs
   {"application/identity" identity
    "text/edn"             edn-renderer
    "*/*"                  template-renderer
-   "text/html"            template-renderer})
+   "text/html"            template-renderer
+   "application/json"     json-renderer})
 
 
 (defn exporter [request]
